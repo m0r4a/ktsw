@@ -46,6 +46,31 @@ module "k3s_cluster" {
 
 ```
 
+## Requirements
+
+| Name | Version |
+| --- | --- |
+| proxmox | 3.0.2-rc07 |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+| --- | --- | --- | --- | --- |
+| `proxmox_node` | The name of the target Proxmox node. | `string` | n/a | yes |
+| `nodes` | Map of node definitions. See [Node Definitions](#node-definitions) below. | `map(object)` | n/a | yes |
+| `ssh_public_key` | Path to public key or raw public key content for `authorized_keys`. | `string` | n/a | yes |
+| `ssh_private_key_path` | Path to the private key used for Ansible connectivity. | `string` | n/a | yes |
+| `cluster_name` | Optional prefix for hostnames. | `string` | `""` | no |
+| `cores` | Global default CPU cores. | `number` | `3` | no |
+| `memory` | Global default RAM (MB). | `number` | `4096` | no |
+| `disk_size` | Global default disk size. | `string` | `"20G"` | no |
+| `template_name` | Name of the cloud-init template on Proxmox. | `string` | `"rocky10-cloudinit"` | no |
+| `ansible_inventory_path` | Directory path for the generated inventory file. | `string` | `""` | no |
+
+## Outputs
+
+This module currently has no outputs.
+
 ## Configuration Details
 
 ### Node Definitions
@@ -74,28 +99,3 @@ This module automatically generates an Ansible inventory file based on the provi
 * **Location:** By default, the file is created at `../ansible/inventory.ini`. You can customize the directory using the `ansible_inventory_path` variable.
 * **Format:** The inventory groups nodes into `[control-plane]` and `[worker]` based on the role assigned in the `nodes` map.
 * **SSH Access:** It configures the `ansible_ssh_private_key_file` variable pointing to the path specified in `ssh_private_key_path`.
-
-## Requirements
-
-| Name | Version |
-| --- | --- |
-| proxmox | 3.0.2-rc07 |
-
-## Inputs
-
-| Name | Description | Type | Default | Required |
-| --- | --- | --- | --- | --- |
-| `proxmox_node` | The name of the target Proxmox node. | `string` | n/a | yes |
-| `nodes` | Map of node definitions. See "Node Definitions" above. | `map(object)` | n/a | yes |
-| `ssh_public_key` | Path to public key or raw public key content for `authorized_keys`. | `string` | n/a | yes |
-| `ssh_private_key_path` | Path to the private key used for Ansible connectivity. | `string` | n/a | yes |
-| `cluster_name` | Optional prefix for hostnames. | `string` | `""` | no |
-| `cores` | Global default CPU cores. | `number` | `3` | no |
-| `memory` | Global default RAM (MB). | `number` | `4096` | no |
-| `disk_size` | Global default disk size. | `string` | `"20G"` | no |
-| `template_name` | Name of the cloud-init template on Proxmox. | `string` | `"rocky10-cloudinit"` | no |
-| `ansible_inventory_path` | Directory path for the generated inventory file. | `string` | `""` | no |
-
-## Outputs
-
-This module currently has no outputs.
