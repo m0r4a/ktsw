@@ -1,83 +1,101 @@
+# Proxmox Kubernetes Cluster Module
+
+This Terraform module provisions virtual machines on Proxmox VE specifically designed for Kubernetes clusters. It handles Cloud-Init configurations, SSH key management, and automatically generates an Ansible inventory file compatible with the provisioned infrastructure.
+
 ## Usage
 
 ```hcl
 module "k3s_cluster" {
   source = "./modules/k8s_cluster/"
 
-  proxmox_node         = "server01"
-  vm_user              = "my_user"
-  vm_password          = "very_secure_password"
+  # Connection to Proxmox
+  proxmox_node         = "pve-01"
+
+  # Global Default Settings (applied if not defined at node level)
+  vm_user              = "ops_user"
+  vm_password          = "secure_password"
   ssh_private_key_path = "~/.ssh/id_ed25519"
   ssh_public_key       = "~/.ssh/id_ed25519.pub"
 
+  # Network defaults
+  network_bridge       = "vmbr1"
+  network_gateway      = "10.0.0.1"
+  network_cidr         = 24
+
+  # Node Definitions
   nodes = {
-    control-plane = {
+    # Hostname will be: control-plane-01
+    "control-plane-01" = {
       vmid = 201
-      user = k8s_master
       role = "control-plane"
-      ip   = "10.0.0.7"
+      ip   = "10.0.0.10"
     }
-    worker = {
-      vmid   = 202
-      role   = "worker"
-      memory = 8192
-      cores  = 5
-      ip     = "10.0.0.8"
+
+    # Hostname will be: worker-high-mem
+    "worker-high-mem" = {
+      vmid      = 202
+      role      = "worker"
+      ip        = "10.0.0.20"
+      # Overriding global defaults
+      memory    = 16384 
+      cores     = 8
+      disk_size = "50G"
     }
   }
-
-  network_bridge  = "vmbr1"
-  network_gateway = "10.0.0.254"
 }
+
 ```
+
+## Configuration Details
+
+### Node Definitions
+
+The `nodes` input is a map where the map key becomes the hostname (or suffix if `cluster_name` is set) and the value is an object defining the VM properties.
+
+**Required Fields:**
+
+* `vmid`: A unique integer ID for the Proxmox VM.
+* `role`: Must be either `"control-plane"` or `"worker"`.
+* `ip`: The static IP address for the VM.
+
+**Optional Fields (Overrides):**
+The following fields are optional. If omitted, the VM will inherit the global default value defined in the module variables (e.g., `var.cores`, `var.memory`).
+
+* `cores`: Number of CPU cores.
+* `memory`: RAM in MB.
+* `disk_size`: Disk size (e.g., "20G").
+* `user`: Cloud-init username.
+* `password`: Cloud-init password.
+
+### Ansible Integration
+
+This module automatically generates an Ansible inventory file based on the provisioned infrastructure.
+
+* **Location:** By default, the file is created at `../ansible/inventory.ini`. You can customize the directory using the `ansible_inventory_path` variable.
+* **Format:** The inventory groups nodes into `[control-plane]` and `[worker]` based on the role assigned in the `nodes` map.
+* **SSH Access:** It configures the `ansible_ssh_private_key_file` variable pointing to the path specified in `ssh_private_key_path`.
 
 ## Requirements
 
 | Name | Version |
-|------|---------|
-| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 3.0.2-rc07 |
-
-## Providers
-
-| Name | Version |
-|------|---------|
-| <a name="provider_local"></a> [local](#provider\_local) | n/a |
-| <a name="provider_null"></a> [null](#provider\_null) | n/a |
-| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 3.0.2-rc07 |
-
-## Modules
-
-No modules.
-
-## Resources
-
-| Name | Type |
-|------|------|
-| [local_file.ansible_inventory](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
-| [null_resource.ssh_keyscan](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
-| [proxmox_vm_qemu.cloudinit](https://registry.terraform.io/providers/telmate/proxmox/3.0.2-rc07/docs/resources/vm_qemu) | resource |
+| --- | --- |
+| proxmox | 3.0.2-rc07 |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_ansible_inventory_path"></a> [ansible\_inventory\_path](#input\_ansible\_inventory\_path) | The path for your ansible inventory (directory only, filename will be added automatically) | `string` | `""` | no |
-| <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | The prefix that the hostname of your VMs will have | `string` | `""` | no |
-| <a name="input_cores"></a> [cores](#input\_cores) | Amount of cores for your VMs | `number` | `3` | no |
-| <a name="input_disk_size"></a> [disk\_size](#input\_disk\_size) | The size of the disk on the VM (e.g., 20G, 50G) | `string` | `"20G"` | no |
-| <a name="input_memory"></a> [memory](#input\_memory) | Amount of RAM for your VMs (in MB) | `number` | `4096` | no |
-| <a name="input_network_bridge"></a> [network\_bridge](#input\_network\_bridge) | The bridge that your VM will use | `string` | `"vmbr0"` | no |
-| <a name="input_network_cidr"></a> [network\_cidr](#input\_network\_cidr) | The cidr of your network | `number` | `24` | no |
-| <a name="input_network_gateway"></a> [network\_gateway](#input\_network\_gateway) | Your network gateway | `string` | `""` | no |
-| <a name="input_nodes"></a> [nodes](#input\_nodes) | Declaration of your nodes | <pre>map(object({<br/>    vmid       = number<br/>    role       = string<br/>    ciuser     = optional(string)<br/>    cipassword = optional(string)<br/>    cores      = optional(number)<br/>    memory     = optional(number)<br/>    disk_size  = optional(string)<br/>    ip         = string<br/>  }))</pre> | n/a | yes |
-| <a name="input_proxmox_node"></a> [proxmox\_node](#input\_proxmox\_node) | The name of your proxmox node | `string` | n/a | yes |
-| <a name="input_ssh_private_key_path"></a> [ssh\_private\_key\_path](#input\_ssh\_private\_key\_path) | The path of the private key you will use with Ansible. | `string` | n/a | yes |
-| <a name="input_ssh_public_key"></a> [ssh\_public\_key](#input\_ssh\_public\_key) | The .pub ssh key you want to add to the .authorized\_keys. This key needs to match with your private key for Ansible. | `string` | n/a | yes |
-| <a name="input_ssh_user"></a> [ssh\_user](#input\_ssh\_user) | The user you will ssh into | `string` | `"root"` | no |
-| <a name="input_template_name"></a> [template\_name](#input\_template\_name) | The cloud-init's template name | `string` | `"rocky10-cloudinit"` | no |
-| <a name="input_vm_password"></a> [vm\_password](#input\_vm\_password) | The password of the user defined on vm\_user | `string` | `"terraform"` | no |
-| <a name="input_vm_user"></a> [vm\_user](#input\_vm\_user) | The username of the main user for the image | `string` | `"root"` | no |
+| --- | --- | --- | --- | --- |
+| `proxmox_node` | The name of the target Proxmox node. | `string` | n/a | yes |
+| `nodes` | Map of node definitions. See "Node Definitions" above. | `map(object)` | n/a | yes |
+| `ssh_public_key` | Path to public key or raw public key content for `authorized_keys`. | `string` | n/a | yes |
+| `ssh_private_key_path` | Path to the private key used for Ansible connectivity. | `string` | n/a | yes |
+| `cluster_name` | Optional prefix for hostnames. | `string` | `""` | no |
+| `cores` | Global default CPU cores. | `number` | `3` | no |
+| `memory` | Global default RAM (MB). | `number` | `4096` | no |
+| `disk_size` | Global default disk size. | `string` | `"20G"` | no |
+| `template_name` | Name of the cloud-init template on Proxmox. | `string` | `"rocky10-cloudinit"` | no |
+| `ansible_inventory_path` | Directory path for the generated inventory file. | `string` | `""` | no |
 
 ## Outputs
 
-No outputs.
+This module currently has no outputs.
