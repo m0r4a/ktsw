@@ -1,0 +1,45 @@
+- name: Create .bash_profile to source .bashrc on SSH login
+  ansible.builtin.copy:
+    dest: "{{ cluster_admin_home }}/.bash_profile"
+    content: |
+      if [ -f ~/.bashrc ]; then
+          . ~/.bashrc
+      fi
+    owner: "{{ cluster_admin_user }}"
+    group: "{{ cluster_admin_user }}"
+    mode: "0644"
+
+- name: Download kubectl-aliases
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/ahmetb/kubectl-aliases/master/.kubectl_aliases"
+    dest: "{{ cluster_admin_home }}/.kubectl_aliases"
+    owner: "{{ cluster_admin_user }}"
+    group: "{{ cluster_admin_user }}"
+    mode: "0644"
+
+- name: Configure kubectl completion and aliases in .bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ cluster_admin_home }}/.bashrc"
+    marker: "# {mark} ANSIBLE MANAGED - kubectl"
+    block: |
+      export KUBECONFIG=~/.kube/config
+
+      if command -v kubectl &>/dev/null; then
+        source <(kubectl completion bash)
+      fi
+
+      [ -f ~/.kubectl_aliases ] && source ~/.kubectl_aliases
+      alias k=kubectl
+      complete -o default -F __start_kubectl k
+    create: true
+    owner: "{{ cluster_admin_user }}"
+    group: "{{ cluster_admin_user }}"
+    mode: "0644"
+
+- name: Configure Flux completion in .bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ cluster_admin_home }}/.bashrc"
+    marker: "# {mark} ANSIBLE MANAGED - flux"
+    block: |
+      . <(flux completion bash)
+    create: false

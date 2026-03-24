@@ -1,12 +1,4 @@
 locals {
-  is_public_ssh_key_path = can(regex("^[~./]", var.ssh_public_key))
-
-  ssh_public_key_content = local.is_public_ssh_key_path ? file(pathexpand(var.ssh_public_key)) : var.ssh_public_key
-
-  ssh_private_key_path = replace(var.ssh_private_key_path, ".pub", "")
-
-  ansible_inventory_path = var.ansible_inventory_path != "" ? "${var.ansible_inventory_path}/inventory.ini" : "${path.root}/../ansible/inventory.ini"
-
   nodes_normalized = {
     for key, value in var.nodes : key => {
       vmid      = value.vmid
@@ -20,4 +12,16 @@ locals {
       ip        = value.ip
     }
   }
+
+  control_plane_ip = one([
+    for name, node in local.nodes_normalized :
+    node.ip if node.role == "control-plane"
+  ])
+
+  is_public_ssh_key_path = can(regex("^[~./]", var.ssh_public_key))
+
+  ssh_public_key_content = local.is_public_ssh_key_path ? file(pathexpand(var.ssh_public_key)) : var.ssh_public_key
+
+  ssh_private_key_path = replace(var.ssh_private_key_path, ".pub", "")
+
 }

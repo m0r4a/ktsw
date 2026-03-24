@@ -1,5 +1,7 @@
 # Proxmox Kubernetes Cluster Module
 
+# TODO: Update this.
+
 This Terraform module provisions virtual machines on Proxmox VE specifically designed for Kubernetes clusters. It handles Cloud-Init configurations, SSH key management, and automatically generates an Ansible inventory file compatible with the provisioned infrastructure.
 
 ## Usage
@@ -21,6 +23,12 @@ module "k3s_cluster" {
   network_bridge       = "vmbr1"
   network_gateway      = "10.0.0.1"
   network_cidr         = 24
+
+  # Ansible configs
+  ansible = {
+    enabled = true
+    path    = "../ansible"
+  }
 
   # Node Definitions
   nodes = {
@@ -94,7 +102,7 @@ The following fields are optional. If omitted, the VM will inherit the global de
 
 ### Ansible Integration
 
-This module automatically generates an Ansible inventory file based on the provisioned infrastructure.
+This module can generate an Ansible inventory file and group_vars based on the provisioned infrastructure.
 
 * **Location:** By default, the file is created at `../ansible/inventory.ini`. You can customize the directory using the `ansible_inventory_path` variable.
 * **Format:** The inventory groups nodes into `[control-plane]` and `[worker]` based on the role assigned in the `nodes` map.

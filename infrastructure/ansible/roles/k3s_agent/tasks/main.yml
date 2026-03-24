@@ -1,0 +1,26 @@
+- name: Check if k3s agent binary exists
+  ansible.builtin.stat:
+    path: "{{ k3s_agent_binary }}"
+  register: _k3s_agent_stat
+
+- name: Retrieve node token from control plane host facts
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ hostvars[groups['control_plane'][0]]['k3s_node_token'] }}"
+  no_log: true
+
+- name: Install k3s agent
+  ansible.builtin.shell: |
+    curl -sfL {{ k3s_install_script_url }} | \
+      INSTALL_K3S_EXEC="agent \
+        --server https://{{ k3s_control_plane_ip }}:{{ k3s_api_port }} \
+        --token {{ k3s_node_token }}" \
+      sh -s -
+  when: not _k3s_agent_stat.stat.exists
+  no_log: true
+  changed_when: true
+
+- name: Ensure k3s-agent service is started and enabled
+  ansible.builtin.systemd:
+    name: k3s-agent
+    state: started
+    enabled: true

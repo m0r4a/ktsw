@@ -1,0 +1,10 @@
+k3s_binary: "/usr/local/bin/k3s"
+k3s_token_file: "/var/lib/rancher/k3s/server/node-token"
+k3s_kubeconfig_src: "/etc/rancher/k3s/k3s.yaml"
+
+helm_binary: "/usr/local/bin/helm"
+cilium_cli_binary: "/usr/local/bin/cilium"
+hubble_cli_binary: "/usr/local/bin/hubble"
+flux_binary: "/usr/local/bin/flux"
+
+cli_install_dir: "/usr/local/bin"

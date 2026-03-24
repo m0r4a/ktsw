@@ -1,0 +1,27 @@
+- name: Check if Helm is already installed
+  ansible.builtin.stat:
+    path: "{{ helm_binary }}"
+  register: _helm_stat
+
+- name: Download Helm install script
+  ansible.builtin.get_url:
+    url: "{{ helm_install_script_url }}"
+    dest: /tmp/get-helm.sh
+    mode: "0755"
+  when: not _helm_stat.stat.exists
+
+- name: Run Helm install script
+  ansible.builtin.command: /tmp/get-helm.sh
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
+  when: not _helm_stat.stat.exists
+  changed_when: "'helm installed into' in _helm_install.stdout"
+  failed_when: >
+    _helm_install.rc != 0 and
+    'helm installed into' not in _helm_install.stdout
+  register: _helm_install
+
+- name: Remove Helm install script
+  ansible.builtin.file:
+    path: /tmp/get-helm.sh
+    state: absent

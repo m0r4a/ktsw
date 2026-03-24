@@ -19,7 +19,7 @@ resource "proxmox_vm_qemu" "cloudinit" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  ipconfig0  = "ip=${each.value.ip}/${var.network_cidr},gw=${var.network_gateway},ip6=dhcp"
+  ipconfig0  = "ip=${each.value.ip}/${var.network_cidr},gw=${var.network_gateway}"
   skip_ipv6  = true
   ciuser     = var.vm_user
   cipassword = each.value.password
@@ -56,14 +56,6 @@ resource "proxmox_vm_qemu" "cloudinit" {
     bridge = var.network_bridge
     model  = "virtio"
   }
-}
-
-resource "local_file" "ansible_inventory" {
-  content = templatefile("${path.module}/inventory.tpl", {
-    nodes                = local.nodes_normalized
-    ssh_private_key_path = local.ssh_private_key_path
-  })
-  filename = local.ansible_inventory_path
 }
 
 resource "null_resource" "ssh_keyscan" {

@@ -1,0 +1,54 @@
+- name: Check if Cilium CLI is already installed
+  ansible.builtin.stat:
+    path: "{{ cilium_cli_binary }}"
+  register: _cilium_cli_stat
+
+- name: Fetch latest Cilium CLI version
+  ansible.builtin.uri:
+    url: "{{ cilium_cli_stable_url }}"
+    return_content: true
+  register: _cilium_cli_version
+  when: not _cilium_cli_stat.stat.exists
+
+- name: Set Cilium CLI version and arch facts
+  ansible.builtin.set_fact:
+    _cilium_cli_ver: "{{ _cilium_cli_version.content | trim }}"
+    _cilium_cli_arch: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
+  when: not _cilium_cli_stat.stat.exists
+
+- name: Download Cilium CLI tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/cilium/cilium-cli/releases/download/{{ _cilium_cli_ver }}/cilium-linux-{{ _cilium_cli_arch }}.tar.gz"
+    dest: "/tmp/cilium-linux-{{ _cilium_cli_arch }}.tar.gz"
+    mode: "0644"
+  when: not _cilium_cli_stat.stat.exists
+
+- name: Download Cilium CLI checksum file
+  ansible.builtin.get_url:
+    url: "https://github.com/cilium/cilium-cli/releases/download/{{ _cilium_cli_ver }}/cilium-linux-{{ _cilium_cli_arch }}.tar.gz.sha256sum"
+    dest: "/tmp/cilium-linux-{{ _cilium_cli_arch }}.tar.gz.sha256sum"
+    mode: "0644"
+  when: not _cilium_cli_stat.stat.exists
+
+- name: Verify Cilium CLI checksum
+  ansible.builtin.command:
+    cmd: "sha256sum --check cilium-linux-{{ _cilium_cli_arch }}.tar.gz.sha256sum"
+    chdir: /tmp
+  changed_when: false
+  when: not _cilium_cli_stat.stat.exists
+
+- name: Extract Cilium CLI to {{ cli_install_dir }}
+  ansible.builtin.unarchive:
+    src: "/tmp/cilium-linux-{{ _cilium_cli_arch }}.tar.gz"
+    dest: "{{ cli_install_dir }}"
+    remote_src: true
+  when: not _cilium_cli_stat.stat.exists
+
+- name: Clean up Cilium CLI temp files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/cilium-linux-{{ _cilium_cli_arch }}.tar.gz"
+    - "/tmp/cilium-linux-{{ _cilium_cli_arch }}.tar.gz.sha256sum"
+  when: not _cilium_cli_stat.stat.exists

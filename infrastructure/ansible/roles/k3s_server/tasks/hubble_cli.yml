@@ -1,0 +1,55 @@
+---
+- name: Check if Hubble CLI is already installed
+  ansible.builtin.stat:
+    path: "{{ hubble_cli_binary }}"
+  register: _hubble_stat
+
+- name: Fetch latest Hubble CLI version
+  ansible.builtin.uri:
+    url: "{{ hubble_cli_stable_url }}"
+    return_content: true
+  register: _hubble_version
+  when: not _hubble_stat.stat.exists
+
+- name: Set Hubble CLI version and arch facts
+  ansible.builtin.set_fact:
+    _hubble_ver: "{{ _hubble_version.content | trim }}"
+    _hubble_arch: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
+  when: not _hubble_stat.stat.exists
+
+- name: Download Hubble CLI tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/cilium/hubble/releases/download/{{ _hubble_ver }}/hubble-linux-{{ _hubble_arch }}.tar.gz"
+    dest: "/tmp/hubble-linux-{{ _hubble_arch }}.tar.gz"
+    mode: "0644"
+  when: not _hubble_stat.stat.exists
+
+- name: Download Hubble CLI checksum file
+  ansible.builtin.get_url:
+    url: "https://github.com/cilium/hubble/releases/download/{{ _hubble_ver }}/hubble-linux-{{ _hubble_arch }}.tar.gz.sha256sum"
+    dest: "/tmp/hubble-linux-{{ _hubble_arch }}.tar.gz.sha256sum"
+    mode: "0644"
+  when: not _hubble_stat.stat.exists
+
+- name: Verify Hubble CLI checksum
+  ansible.builtin.command:
+    cmd: "sha256sum --check hubble-linux-{{ _hubble_arch }}.tar.gz.sha256sum"
+    chdir: /tmp
+  changed_when: false
+  when: not _hubble_stat.stat.exists
+
+- name: Extract Hubble CLI to {{ cli_install_dir }}
+  ansible.builtin.unarchive:
+    src: "/tmp/hubble-linux-{{ _hubble_arch }}.tar.gz"
+    dest: "{{ cli_install_dir }}"
+    remote_src: true
+  when: not _hubble_stat.stat.exists
+
+- name: Clean up Hubble CLI temp files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/hubble-linux-{{ _hubble_arch }}.tar.gz"
+    - "/tmp/hubble-linux-{{ _hubble_arch }}.tar.gz.sha256sum"
+  when: not _hubble_stat.stat.exists

@@ -1,0 +1,38 @@
+- name: Check if k3s server binary exists
+  ansible.builtin.stat:
+    path: "{{ k3s_binary }}"
+  register: _k3s_binary_stat
+
+- name: Install k3s server
+  ansible.builtin.shell: |
+    curl -sfL {{ k3s_install_script_url }} | \
+      INSTALL_K3S_EXEC="server \
+        --flannel-backend=none \
+        --disable=servicelb \
+        --disable-network-policy \
+        --cluster-cidr={{ k3s_cluster_cidr }} \
+        --service-cidr={{ k3s_service_cidr }}" \
+      sh -
+  when: not _k3s_binary_stat.stat.exists
+  changed_when: true
+
+- name: Ensure k3s service is started and enabled
+  ansible.builtin.systemd:
+    name: k3s
+    state: started
+    enabled: true
+
+- name: Wait for node token to be generated
+  ansible.builtin.wait_for:
+    path: "{{ k3s_token_file }}"
+    state: present
+    timeout: 120
+
+- name: Read k3s node token
+  ansible.builtin.slurp:
+    src: "{{ k3s_token_file }}"
+  register: _k3s_token_raw
+
+- name: Expose k3s token as host fact (used by workers)
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ _k3s_token_raw.content | b64decode | trim }}"

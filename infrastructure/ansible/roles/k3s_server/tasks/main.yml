@@ -1,0 +1,31 @@
+- name: Install k3s server
+  ansible.builtin.include_tasks: install.yml
+  tags: [k3s-server, install]
+
+- name: Configure kubeconfig
+  ansible.builtin.include_tasks: kubeconfig.yml
+  tags: [k3s-server, kubeconfig]
+
+- name: Install Helm
+  ansible.builtin.include_tasks: helm.yml
+  tags: [k3s-server, helm]
+
+- name: Install Cilium CLI
+  ansible.builtin.include_tasks: cilium_cli.yml
+  tags: [k3s-server, cilium-cli]
+
+- name: Deploy Cilium
+  ansible.builtin.include_tasks: cilium_deploy.yml
+  tags: [k3s-server, cilium]
+
+- name: Install Hubble CLI
+  ansible.builtin.include_tasks: hubble_cli.yml
+  tags: [k3s-server, hubble]
+
+- name: Install Flux CLI
+  ansible.builtin.include_tasks: flux_cli.yml
+  tags: [k3s-server, flux]
+
+- name: Configure shell environment
+  ansible.builtin.include_tasks: shell_config.yml
+  tags: [k3s-server, shell]

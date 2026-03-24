@@ -147,13 +147,36 @@ variable "network_bridge" {
   default     = "vmbr0"
 }
 
-variable "ansible_inventory_path" {
-  description = "The path for your ansible inventory (directory only, filename will be added automatically)"
-  type        = string
-  default     = ""
+variable "ansible" {
+  description = "Ansible integration config. Set enabled = true to generate inventory and group_vars."
+  type = object({
+    enabled = bool
+    path    = optional(string, "")
+  })
+  default = {
+    enabled = false
+    path    = ""
+  }
 
   validation {
-    condition     = var.ansible_inventory_path == "" || !can(regex("\\.(ini|yaml)$", var.ansible_inventory_path))
-    error_message = "Path must not contain the filename. Provide only the directory path (e.g., './ansible' not './ansible/inventory.ini')."
+    condition     = !var.ansible.enabled || var.ansible.path != ""
+    error_message = "ansible.path is required when ansible.enabled is true."
   }
+
+  validation {
+    condition     = var.ansible.path == "" || !can(regex("\\.(ini|yaml)$", var.ansible.path))
+    error_message = "ansible.path must be a directory, not a file path (e.g. './ansible', not './ansible/inventory.ini')."
+  }
+}
+
+variable "k3s_cluster_cidr" {
+  description = "Pod CIDR for the k3s cluster"
+  type        = string
+  default     = "11.0.0.0/16"
+}
+
+variable "k3s_service_cidr" {
+  description = "Service CIDR for the k3s cluster"
+  type        = string
+  default     = "11.1.0.0/16"
 }
