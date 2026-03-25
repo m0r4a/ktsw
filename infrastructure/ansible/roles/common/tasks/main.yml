@@ -1,3 +1,8 @@
+- name: Clean DNF cache before update
+  ansible.builtin.command: dnf clean all
+  changed_when: false
+  tags: [packages]
+
 - name: Update all packages
   ansible.builtin.dnf:
     name: "*"
