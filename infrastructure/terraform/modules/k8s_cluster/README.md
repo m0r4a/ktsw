@@ -20,6 +20,8 @@ Before running Terraform, your Proxmox node needs a dedicated API user, an API t
 The script creates a `TerraformProv` role with the minimum required privileges, a `terraform-prov@pve` user, an API token, a `qemu-guest-agent` cloud-init snippet, and a `rocky10-cloudinit` VM template. At the end it prints the provider block and the `.env` exports you need.
 
 ## Usage
+
+> main.tf
 ```hcl
 provider "proxmox" {
   pm_api_url      = "https://192.168.1.2:8006/api2/json"
@@ -68,6 +70,12 @@ module "k3s_cluster" {
   network_bridge  = "vmbr1"
   network_gateway = "10.0.0.253"
 }
+```
+
+> .env
+```bash
+export PM_API_TOKEN_ID="terraform-prov@pve!mytoken"
+export PM_API_TOKEN_SECRET="<your token>"
 ```
 
 ## Requirements
