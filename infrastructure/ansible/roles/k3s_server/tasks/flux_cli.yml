@@ -12,6 +12,8 @@
 
 - name: Run Flux install script
   ansible.builtin.command: /tmp/install-flux.sh
+  environment:
+    PATH: "/usr/local/bin:/usr/bin:/bin"
   when: not _flux_stat.stat.exists
   changed_when: true
 

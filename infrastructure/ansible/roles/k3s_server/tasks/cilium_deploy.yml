@@ -11,16 +11,16 @@
 
 - name: Install Cilium via Helm
   ansible.builtin.command:
-    cmd: >-
-      helm install cilium oci://quay.io/cilium/charts/cilium
-      --version {{ cilium_chart_version }}
-      --namespace kube-system
-      --create-namespace
-      -f {{ cilium_values_url }}
-      --set k8sServiceHost={{ k3s_control_plane_ip }}
-      --set k8sServicePort={{ k3s_api_port }}
-      --set ipam.operator.clusterPoolIPv4PodCIDRList='{{ k3s_cluster_cidr }}'
-      --wait
+  cmd: >-
+    helm install cilium oci://quay.io/cilium/charts/cilium
+    --version {{ cilium_chart_version }}
+    --namespace kube-system
+    --create-namespace
+    -f {{ cilium_values_url }}
+    --set k8sServiceHost={{ k3s_control_plane_ip }}
+    --set k8sServicePort={{ k3s_api_port }}
+    --set-json 'ipam.operator.clusterPoolIPv4PodCIDRList=["{{ k3s_cluster_cidr }}"]'
+    --wait
   become: true
   become_user: "{{ cluster_admin_user }}"
   environment:
