@@ -1,0 +1,8 @@
+terraform/terraform.tfstate*
+terraform/.terraform*
+terraform/.env
+terraform/main.tf
+ansible/inventory.ini
+ansible/group_vars/all.yml
+ansible/observability.md
+terraform/example.tf
