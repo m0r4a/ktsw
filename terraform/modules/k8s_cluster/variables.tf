@@ -101,11 +101,10 @@ variable "disk_size" {
   }
 }
 
-variable "ssh_user" {
-  description = "The user you will ssh into"
-  type        = string
-  default     = "root"
-}
+# variable "ssh_user" {
+#   description = "The user you will ssh into"
+#   type        = string
+# }
 
 variable "ssh_public_key" {
   description = "The .pub ssh key you want to add to the .authorized_keys. This key needs to match with your private key for Ansible."
