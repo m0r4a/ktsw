@@ -18,13 +18,11 @@ variable "cluster_name" {
 variable "vm_user" {
   description = "The username of the main user for the image"
   type        = string
-  default     = "root"
 }
 
 variable "vm_password" {
   description = "The password of the user defined on vm_user"
   type        = string
-  default     = "terraform"
   sensitive   = true
 }
 

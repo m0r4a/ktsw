@@ -93,8 +93,8 @@ export PM_API_TOKEN_SECRET="<your token>"
 | `ssh_public_key` | Raw public key content for `authorized_keys`. | `string` | n/a | yes |
 | `ssh_private_key_path` | Path to the private key used for Ansible connectivity. | `string` | n/a | yes |
 | `cluster_name` | Optional prefix for hostnames. | `string` | `""` | no |
-| `vm_user` | Cloud-init username for the VM image. | `string` | `"root"` | no |
-| `vm_password` | Password for `vm_user`. | `string` | `"terraform"` | no |
+| `vm_user` | Cloud-init username for the VM image. | `string` | n/a | yes |
+| `vm_password` | Password for `vm_user`. | `string` | n/a | yes |
 | `ssh_user` | User for SSH connections. | `string` | `"root"` | no |
 | `cores` | Global default CPU cores (min 2). | `number` | `3` | no |
 | `memory` | Global default RAM in MB (min 2048). | `number` | `4096` | no |
