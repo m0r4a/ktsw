@@ -13,7 +13,7 @@ cluster_admin_home: "/home/${vm_user}"
 
 # Tool versions
 cilium_chart_version: "1.19.1"
-cilium_values_url: "https://raw.githubusercontent.com/m0r4a/flux_cd_testing/refs/heads/main/apps/infrastructure/cilium/values.yaml"
+cilium_values_url: "https://raw.githubusercontent.com/m0r4a/k3s-in-Proxmox/refs/heads/main/ansible/resources/values.yaml"
 
 # Install script URLs
 k3s_install_script_url: "https://get.k3s.io"
